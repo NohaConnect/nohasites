@@ -20,17 +20,56 @@ Esta skill encapsula esse processo em 12 fases (0 a 11), com a Fase 0 sendo **"e
 
 ## Instalação
 
+### Caminho rápido (script all-in-one)
+
+Instala `nohasites` + `nohatracking` em uma linha:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NohaConnect/nohasites/main/install.sh | bash
+```
+
+### Caminho manual
+
+**1) A skill em si:**
+
 ```bash
 git clone https://github.com/NohaConnect/nohasites.git ~/.claude/skills/nohasites
 ```
 
-Pra atualizar quando houver mudanças:
+**2) Skills dependentes (necessárias para o fluxo completo):**
+
+```bash
+# nohatracking — obrigatória (usada na Phase 9: tracking GA4 + Pixel + CAPI)
+git clone https://github.com/NohaConnect/nohatracking.git ~/.claude/skills/nohatracking
+```
+
+**3) Plugins de marketplace (dentro do Claude Code, não no terminal):**
+
+```text
+# superpowers — usado na Phase 2 (brainstorm criativo)
+/plugin install superpowers@superpowers-marketplace
+
+# frontend-design — usado na Phase 6 (produção visual não-genérica)
+/plugin install frontend-design@claude-code-plugins
+```
+
+**4) Skills marketplace (geralmente já vêm ativas no Claude Code default):**
+
+- `ui-ux-pro-max` — Phase 4 (design system quando NÃO há brandbook)
+- `copywriting` — Phase 6 sob demanda (copy de seções)
+
+Se sumirem, verificar via `/plugin` no Claude Code.
+
+### Atualizar versões
 
 ```bash
 cd ~/.claude/skills/nohasites && git pull
+cd ~/.claude/skills/nohatracking && git pull
 ```
 
-Dentro do Claude Code, invoque com `/nohasites` ou simplesmente diga "vamos criar um site novo pra <cliente>".
+### Usar
+
+Dentro do Claude Code, invoque com `/nohasites` ou simplesmente diga "vamos criar um site novo pra <cliente>". A própria skill verifica as dependências na Phase -1 (Pré-flight check) antes de começar o briefing.
 
 ## Fluxo da skill (visão geral)
 

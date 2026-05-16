@@ -60,6 +60,58 @@ de ponta a ponta — do briefing ao deploy no Cloudflare.
 | `nohatracking` | Fase 9 (tracking) | Stack completo GA4 + Pixel + CAPI |
 | `copywriting` | Fase 6, sob demanda | Quando o usuário pede ajuda com copy de seções específicas |
 
+## Phase -1 — Pré-flight check (rodar ANTES da Fase 0)
+
+Antes de iniciar o briefing, **verificar e instalar** as skills dependentes.
+
+### 1. Detectar o que falta
+
+```bash
+# Skills Noha (instaladas via git clone)
+test -f ~/.claude/skills/nohasites/SKILL.md     && echo "✓ nohasites"     || echo "✗ nohasites"
+test -f ~/.claude/skills/nohatracking/SKILL.md  && echo "✓ nohatracking"  || echo "✗ nohatracking"
+
+# Skills de marketplace (instaladas via /plugin)
+ls ~/.claude/plugins/superpowers-marketplace 2>/dev/null && echo "✓ superpowers"      || echo "✗ superpowers"
+ls ~/.claude/plugins/claude-code-plugins     2>/dev/null && echo "✓ frontend-design"  || echo "✗ frontend-design"
+
+# ui-ux-pro-max e copywriting — verificar manualmente na lista de skills disponíveis
+```
+
+### 2. Instalar o que falta
+
+**Skills Noha (git clone):**
+
+```bash
+# nohatracking (obrigatória — Fase 9)
+git clone https://github.com/NohaConnect/nohatracking.git ~/.claude/skills/nohatracking
+```
+
+**Plugins de marketplace (dentro do Claude Code):**
+
+```text
+# superpowers — brainstorming, writing-skills, etc.
+/plugin install superpowers@superpowers-marketplace
+
+# frontend-design — production visual
+/plugin install frontend-design@claude-code-plugins
+```
+
+**Skills marketplace individuais (já vêm no setup default do Claude Code):**
+
+- `ui-ux-pro-max` — geralmente já vem ativa. Verificar em `/plugin` se sumir.
+- `copywriting` — idem.
+
+### 3. Confirmar e seguir
+
+Após instalação, recarregar a sessão (`/restart` ou abrir nova) e seguir
+para a **Fase 0**.
+
+Se alguma skill obrigatória (`nohatracking`) seguir faltando, **PARAR** e
+pedir ao usuário para instalar antes de prosseguir. Não tentar reimplementar
+a funcionalidade aqui — a divisão por skill é proposital pra manter cada
+domínio focado.
+
 # Fases
 
 ## Phase 0 — Brandbook check (CRITICAL — sempre antes de qualquer coisa)
