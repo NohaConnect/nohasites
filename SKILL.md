@@ -8,6 +8,9 @@ description: >
   dossier, animações com propósito, Lighthouse 90+, SEO técnico completo,
   tracking GA4+Pixel+CAPI via skill nohatracking. SEMPRE pergunta primeiro se
   há brandbook existente — se sim, segue o brandbook; se não, propõe direção.
+  SEMPRE invoca a skill ui-ux-pro-max em todas as fases de design, independente
+  de haver brandbook. SEMPRE otimiza 100% para mobile — zero overflow horizontal,
+  zero scroll lateral no celular, viewport travada, imagens responsivas.
   Use quando o usuário digitar /nohasites, pedir pra criar site, landing page,
   portfolio, site institucional, ou qualquer projeto web novo.
 ---
@@ -34,8 +37,12 @@ de ponta a ponta — do briefing ao deploy no Cloudflare.
 3. **Performance Lighthouse 90+** em Performance, Acessibilidade, SEO.
 4. **SEO técnico completo** antes do deploy (OG, Twitter, JSON-LD, sitemap).
 5. **Tracking sempre.** Toda entrega passa pela skill `nohatracking`.
-6. **Mobile-first.** Toda decisão de layout pensa em mobile primeiro.
+6. **Mobile-first absoluto.** Toda decisão de layout pensa em mobile primeiro.
+   Zero overflow horizontal — o usuário NUNCA deve poder dar scroll lateral
+   no celular e ver área branca fora do site.
 7. **LGPD respeitado.** Consentimento explícito para captura de PII.
+8. **ui-ux-pro-max sempre.** A skill `ui-ux-pro-max` é invocada em toda fase
+   de design system e construção visual, com ou sem brandbook.
 
 ## Stack padrão Noha
 
@@ -54,11 +61,15 @@ de ponta a ponta — do briefing ao deploy no Cloudflare.
 
 | Skill | Quando invocar | Para quê |
 |---|---|---|
+| `ui-ux-pro-max` | **SEMPRE — Fase 2, Fase 4 e Fase 6** | Design system completo, tipografia, paleta, layout, responsividade — com ou sem brandbook |
 | `superpowers:brainstorming` | Fase 2 (briefing virou consenso, antes do design system) | Validar direção criativa com o usuário |
-| `ui-ux-pro-max` | Fase 4 (design system) | Quando NÃO há brandbook — sugerir tipografia, paleta, layout style |
 | `frontend-design` | Fase 6 (construção) | Garantir produção visual não-genérica |
 | `nohatracking` | Fase 9 (tracking) | Stack completo GA4 + Pixel + CAPI |
 | `copywriting` | Fase 6, sob demanda | Quando o usuário pede ajuda com copy de seções específicas |
+
+> **REGRA ABSOLUTA:** `ui-ux-pro-max` é acionada em TODAS as fases de design,
+> independente de haver brandbook. Com brandbook, ela valida e enriquece. Sem
+> brandbook, ela propõe. Nunca pular.
 
 ## Phase -1 — Pré-flight check (rodar ANTES da Fase 0)
 
@@ -75,7 +86,10 @@ test -f ~/.claude/skills/nohatracking/SKILL.md  && echo "✓ nohatracking"  || e
 ls ~/.claude/plugins/superpowers-marketplace 2>/dev/null && echo "✓ superpowers"      || echo "✗ superpowers"
 ls ~/.claude/plugins/claude-code-plugins     2>/dev/null && echo "✓ frontend-design"  || echo "✗ frontend-design"
 
-# ui-ux-pro-max e copywriting — verificar manualmente na lista de skills disponíveis
+# ui-ux-pro-max — OBRIGATÓRIA (verificar na lista de skills disponíveis)
+ls ~/.claude/plugins/marketplaces/ui-ux-pro-max-skill 2>/dev/null && echo "✓ ui-ux-pro-max" || echo "✗ ui-ux-pro-max (CRÍTICO — instalar antes de prosseguir)"
+
+# copywriting — verificar manualmente na lista de skills disponíveis
 ```
 
 ### 2. Instalar o que falta
@@ -121,6 +135,10 @@ domínio focado.
 > "Antes de tudo: já existe um brandbook ou identidade visual definida para
 > esse projeto? (logo, paleta de cores, fontes oficiais, manual de marca,
 > referências visuais aprovadas)"
+
+**Em ambos os caminhos abaixo:** invocar `ui-ux-pro-max` na Fase 4.
+Com brandbook, ela valida consistência e enriquece tokens. Sem brandbook,
+ela propõe tipografia, paleta e layout style. Nunca pular.
 
 ### Caminho A — Brandbook existe
 
@@ -267,6 +285,106 @@ Tailwind default (4px scale) está OK. Para seções, padronizar:
 }
 ```
 
+## Phase 4.5 — Mobile-First Anti-Overflow (REGRA ABSOLUTA)
+
+O site NUNCA pode ter scroll horizontal em nenhum dispositivo. O usuário
+NUNCA deve conseguir dar zoom out e ver área branca à direita ou à esquerda
+do conteúdo. Esta fase acontece junto à construção e deve ser validada antes
+do deploy.
+
+### Causas raiz do overflow horizontal (e como eliminar cada uma)
+
+| Causa | Sintoma | Correção |
+|---|---|---|
+| Elemento com largura fixa em px | Scroll lateral em mobile | Usar `max-w-full` ou `w-full`, nunca `w-[1200px]` sem `max-w-full` |
+| Imagem sem `max-width` | Imagem vaza do container | `img, video, svg { max-width: 100%; height: auto; }` |
+| Elemento com `position: absolute` e offset grande | Conteúdo decorativo vaza | Adicionar `overflow-x: hidden` no ancestral ou limitar o offset |
+| Elemento com `translate-x` saindo da tela | Animação vaza | Envolver com `overflow-hidden` ou ajustar o valor |
+| Grid/flex item sem `min-width: 0` | Item estica o container | Adicionar `min-w-0` ao item ou `overflow-hidden` ao container |
+| Texto longo sem quebra | URL/palavra longa não quebra | `overflow-wrap: break-word` ou classe `break-words` |
+| Tabela sem scroll | Tabela empurra a página | Envolver com `<div class="overflow-x-auto">` |
+| Pseudo-elemento (`::before`/`::after`) com largura fixa | Elemento decorativo vaza | Limitar tamanho ou adicionar `overflow: hidden` no pai |
+| `margin-left` negativo sem compensação | Container extrapola | Usar padding no pai para compensar |
+| Viewport meta incorreto | Zoom forçado em iOS | `<meta name="viewport" content="width=device-width, initial-scale=1">` |
+
+### CSS anti-overflow obrigatório (vai direto no `global.css`)
+
+```css
+/* ─── MOBILE OVERFLOW PREVENTION — nunca remover ─── */
+html {
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+video,
+svg,
+canvas,
+iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+```
+
+### Viewport meta — NUNCA omitir
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+```
+
+Atenção: **nunca usar** `user-scalable=no` ou `maximum-scale=1` — além de
+quebrar acessibilidade, não resolve overflow e é banido pelo Lighthouse.
+
+### Testar overflow mobile (obrigatório antes do deploy)
+
+```bash
+# DevTools → Toggle device toolbar → testar em:
+# 360×640  (Android básico — menor viewport comum)
+# 375×667  (iPhone SE)
+# 390×844  (iPhone 14)
+# 414×896  (iPhone XR / Plus)
+# 428×926  (iPhone 14 Plus)
+```
+
+Verificar: nenhuma barra de scroll horizontal deve aparecer em nenhum breakpoint.
+
+**Atalho no Chrome DevTools:** Abrir Console e rodar:
+```js
+// Detecta elementos que ultrapassam a largura do body
+const els = [...document.querySelectorAll('*')].filter(
+  el => el.getBoundingClientRect().right > document.body.getBoundingClientRect().right + 1
+);
+console.table(els.map(el => ({ tag: el.tagName, class: el.className, right: el.getBoundingClientRect().right })));
+```
+
+Se retornar elementos, são os causadores do overflow — corrigir antes de deploy.
+
+### Regras Tailwind para mobile (aplicar em todos os componentes)
+
+- `max-w-full` em todo elemento que pode ser mais largo que o viewport
+- `overflow-hidden` em containers com elementos absolutos decorativos
+- `min-w-0` em flex/grid items que podem estourar
+- `break-words` em textos de usuário ou conteúdo dinâmico
+- `w-full` > `w-screen` — `w-screen` pode causar overflow em alguns contextos
+- Nunca usar `left-[-200px]` ou offsets grandes sem `overflow-x: hidden` no pai
+- Seções com grain/decoração absoluta: sempre `relative overflow-hidden`
+
 ### Tokens completos (template `global.css`)
 
 ```css
@@ -304,8 +422,23 @@ Tailwind default (4px scale) está OK. Para seções, padronizar:
 }
 
 @layer base {
-  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; scroll-behavior: smooth; }
-  body { background: var(--color-bg); color: var(--color-fg); font-family: var(--font-sans); line-height: 1.55; }
+  /* Anti-overflow mobile — NUNCA remover */
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+  body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    line-height: 1.55;
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  img, video, svg, canvas, iframe { max-width: 100%; height: auto; }
   h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; line-height: 1.05; }
   ::selection { background: var(--color-accent); color: var(--color-bg); }
 }
@@ -615,6 +748,11 @@ Depois do primeiro deploy, no dashboard Cloudflare:
 
 Não considerar entregue até que TODOS estes itens estejam ✅:
 
+- [ ] **Zero scroll horizontal** em 360px, 375px, 390px, 414px (testar com DevTools + snippet JS)
+- [ ] **Viewport meta correto:** `width=device-width, initial-scale=1, viewport-fit=cover`
+- [ ] **`overflow-x: hidden`** no `html` e `body`
+- [ ] **Imagens com `max-width: 100%`** — nenhuma imagem ultrapassa o viewport
+- [ ] **ui-ux-pro-max** invocada e suas sugestões aplicadas
 - [ ] Lighthouse Performance ≥ 90 (mobile e desktop)
 - [ ] Lighthouse Accessibility ≥ 90
 - [ ] Lighthouse SEO ≥ 90
@@ -651,6 +789,8 @@ Não considerar entregue até que TODOS estes itens estejam ✅:
   se o cliente tem time de marketing que precisa de controle sem dev.
 - **NUNCA** entregar sem o skill `nohatracking` configurado.
 - **NUNCA** entregar sem JSON-LD válido pra Schema.org.
+- **NUNCA** scroll horizontal em mobile — bloqueador absoluto de entrega.
+- **NUNCA** pular a skill `ui-ux-pro-max` — invocar em toda fase de design.
 - **SEMPRE** 1 fonte display + 1 fonte body (máximo 2 no projeto).
 - **SEMPRE** 1 cor accent única usada com parcimônia.
 - **SEMPRE** numeração de seções DOSSIÊ № XX (ou variação adaptada ao
@@ -659,8 +799,24 @@ Não considerar entregue até que TODOS estes itens estejam ✅:
 - **SEMPRE** grain texture sutil em imagens de hero/cards principais.
 - **SEMPRE** assimetria nos grids (7/5, 8/4, nunca 6/6 sem tensão).
 - **SEMPRE** PT-BR como idioma default (lang="pt-BR").
+- **SEMPRE** `overflow-x: hidden` em html e body.
+- **SEMPRE** `max-width: 100%` em imagens, vídeos e SVGs.
+- **SEMPRE** viewport meta com `width=device-width, initial-scale=1, viewport-fit=cover`.
+- **SEMPRE** invocar `ui-ux-pro-max` na Fase 2, Fase 4 e Fase 6.
 
 ## Common pitfalls
+
+- **Overflow horizontal no mobile** — o usuário consegue dar scroll lateral e
+  ver área branca do lado direito/esquerdo. Causa mais comum: elemento com
+  largura fixa em px, imagem sem `max-width: 100%`, ou elemento decorativo
+  com `position: absolute` e offset excessivo. Antídoto: aplicar o CSS
+  anti-overflow da Phase 4.5 logo no início da construção, não no final.
+  Rodar o snippet JS de detecção antes do deploy.
+
+- **Pular ui-ux-pro-max** — não é opcional, não é "só se não tiver brandbook".
+  Invocar sempre na Fase 2 (brainstorm), Fase 4 (design system) e Fase 6
+  (construção visual). A skill eleva o padrão visual mesmo com brandbook
+  definido.
 
 - **Cair em "design de portfolio AI"** — gradientes pastéis, ilustrações 3D
   rotation, glassmorphism genérico. Antídoto: começar do brandbook ou de
