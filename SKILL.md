@@ -62,7 +62,7 @@ de ponta a ponta — do briefing ao deploy no Cloudflare.
 | Skill | Quando invocar | Para quê |
 |---|---|---|
 | `ui-ux-pro-max` | **SEMPRE — Fase 2, Fase 4 e Fase 6** | Design system completo, tipografia, paleta, layout, responsividade — com ou sem brandbook |
-| `superpowers:brainstorming` | Fase 2 (briefing virou consenso, antes do design system) | Validar direção criativa com o usuário |
+| `superpowers:brainstorming` | Fase 2 (direção criativa) **E Fase 6 — uma vez por seção, antes de codar** | Validar direção criativa e detalhar os componentes de cada seção com o usuário |
 | `frontend-design` | Fase 6 (construção) | Garantir produção visual não-genérica |
 | `nohatracking` | Fase 9 (tracking) | Stack completo GA4 + Pixel + CAPI |
 | `copywriting` | Fase 6, sob demanda | Quando o usuário pede ajuda com copy de seções específicas |
@@ -540,6 +540,57 @@ Ordem recomendada (adaptar conforme o tipo de negócio):
 | 10 | **Localização / Contato** (DOSSIÊ № XX) | negócio físico | `Localizacao.astro` |
 | 11 | **Footer** | sempre | `Footer.astro` |
 
+### Fluxo de construção: seção a seção, componente a componente (REGRA)
+
+Não construir a página inteira de uma vez. Construir **uma seção por vez**, e
+dentro de cada seção **detalhar os componentes antes de codar**. Antes de
+escrever qualquer JSX/Astro de uma seção, rodar este ciclo:
+
+**1. Brainstorm da seção (OBRIGATÓRIO — usar `superpowers:brainstorming`)**
+
+Para CADA seção, invocar a skill `superpowers:brainstorming` e conversar com o
+usuário sobre os componentes daquela seção de forma detalhada — uma pergunta
+por vez, estilo Socratic. Nunca presumir o conteúdo/layout de uma seção sem
+alinhar antes. Cobrir:
+
+- **Objetivo da seção** — o que essa seção precisa fazer pelo visitante?
+- **Componentes que a compõem** — listar cada bloco (ex.: no Hero →
+  eyebrow, headline, subtítulo, 2 CTAs, visual lateral, stat row). Decidir
+  quais entram, quais saem.
+- **Conteúdo real** — texto, imagens, dados. Pegar do usuário, não inventar
+  placeholder que vai virar débito.
+- **Layout e hierarquia** — assimetria (7/5, 8/4), o que domina visualmente.
+- **Efeitos signature** — perguntar se algum da Biblioteca (Phase 7.5) entra
+  nessa seção específica.
+- **Estados** — hover, vazio, erro, loading, mobile.
+
+Fechar consenso da seção antes de codar. Só então construir o componente.
+
+**2. Buscar componente pronto no 21st.dev ANTES de codar do zero (INCENTIVAR SEMPRE)**
+
+Para todo componente com interatividade ou padrão visual conhecido (navbar,
+cards, accordion/FAQ, carousel, marquee, bento grid, hover effects, tabs,
+modais, formulários), **primeiro procurar em [21st.dev](https://21st.dev)** —
+e também shadcn/ui e Magic UI. Sempre trazer ao usuário: "encontrei esse
+componente no 21st que serve pra X — quer que eu adapte ou prefere do zero?"
+
+- Usar o **MCP do 21st/Magic** (Magic MCP) ou navegar o 21st.dev pra achar a
+  referência mais próxima.
+- **Adaptar aos tokens Noha** (cores accent, fontes display/body, raios,
+  sombras) — nunca colar o componente com o estilo default dele.
+- Reescrever do zero só quando: não há match decente no 21st, ou o componente
+  é trivial (um `<button>`, um divisor), ou o brandbook exige algo único.
+
+> **REGRA:** antes de escrever um componente não-trivial do zero, a resposta
+> default é "procurei no 21st.dev?". Codar do zero é a exceção justificada,
+> não o ponto de partida.
+
+**3. Construir → validar mobile → próxima seção**
+
+Codar o componente, rodar o check anti-overflow da Phase 4.5 naquela seção,
+confirmar visual com o usuário, e só então passar pra próxima seção. Uma
+seção fechada e validada de cada vez.
+
 ### Hero — padrão Noha
 
 Anatomia:
@@ -593,6 +644,11 @@ profundidade analógica e tira o "ar de site feito em template".
 **Regra:** não animar tudo. Cada animação deve ter um propósito narrativo ou
 funcional. Pisca-pisca é poluição visual.
 
+> Para os efeitos "wow" recorrentes (preloader, palavra rotativa, halftone,
+> navbar pílula, seção pinada com parallax), ver **Phase 7.5 — Biblioteca de
+> Efeitos Signature**, com implementação Astro pronta. Sempre oferecer esse
+> menu na Fase 6; nunca aplicar tudo por padrão.
+
 **Sempre respeitar `prefers-reduced-motion`:**
 
 ```css
@@ -603,6 +659,236 @@ funcional. Pisca-pisca é poluição visual.
   }
 }
 ```
+
+## Phase 7.5 — Biblioteca de Efeitos Signature (SEMPRE oferecer como opção)
+
+Conjunto curado de efeitos "wow" que elevam a percepção de qualidade sem
+quebrar as regras Noha (zero JS pesado global, Lighthouse 90+, sem Inter,
+1 accent única, mobile sem overflow). **Adaptados pra Astro — vanilla JS em
+`<script>` de componente ou ilha GSAP carregada sob demanda, nunca uma SPA.**
+
+> **REGRA:** Na Fase 6/7, SEMPRE apresentar essa biblioteca como um menu de
+> opções ("quer algum desses efeitos?"). NÃO aplicar todos por padrão — o
+> usuário escolhe quais entram. O default é sobriedade editorial; os efeitos
+> são temperos. Cada efeito abaixo respeita `prefers-reduced-motion`.
+
+> **REGRA DE ACCENT:** os efeitos abaixo nunca usam gradiente azul de template.
+> Onde houver gradiente, derivar da accent do projeto:
+> ```css
+> --gradient-accent: linear-gradient(
+>   90deg,
+>   color-mix(in oklab, var(--color-accent) 65%, white) 0%,
+>   var(--color-accent) 100%
+> );
+> ```
+
+### Efeito 1 — Preloader com contador + palavras rotativas
+
+**O que é:** overlay full-screen antes do site aparecer; um contador
+`000 → 100` e palavras-chave da marca trocando (ex.: "Cuidado · Precisão ·
+Confiança"). Dá um "momento de chegada" premium.
+
+**Quando usar:** portfolios, sites de marca/luxo, lançamentos. **Evitar** em:
+e-commerce (atrito na conversão), sites de serviço local (usuário quer
+telefone/endereço já), qualquer página onde velocidade percebida > teatro.
+
+**Astro (`Preloader.astro`)** — vanilla JS, zero dependência, some sozinho:
+
+```astro
+---
+const words = Astro.props.words ?? ["Design", "Criação", "Cuidado"];
+---
+<div id="preloader" class="fixed inset-0 z-[9999] bg-[var(--color-bg)]">
+  <span class="absolute left-6 top-6 text-xs uppercase tracking-[0.3em] text-[var(--color-fg-subtle)]">{Astro.props.label ?? "Carregando"}</span>
+  <span id="pre-word" class="absolute inset-0 grid place-items-center font-[var(--font-display)] italic text-5xl md:text-7xl text-[var(--color-fg)]/80"></span>
+  <span id="pre-count" class="absolute bottom-10 right-6 font-[var(--font-display)] tabular-nums text-7xl md:text-9xl text-[var(--color-fg)]">000</span>
+  <div class="absolute bottom-0 inset-x-0 h-[3px] bg-[var(--color-line)]">
+    <div id="pre-bar" class="h-full origin-left" style="background: var(--gradient-accent); transform: scaleX(0)"></div>
+  </div>
+</div>
+<script define:vars={{ words }}>
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const el = document.getElementById("preloader");
+  const wordEl = document.getElementById("pre-word");
+  const countEl = document.getElementById("pre-count");
+  const bar = document.getElementById("pre-bar");
+  const DURATION = reduce ? 0 : 2200;
+  let i = 0;
+  wordEl.textContent = words[0];
+  const wi = setInterval(() => { i = (i + 1) % words.length; wordEl.textContent = words[i]; }, 900);
+  const start = performance.now();
+  function tick(now) {
+    const p = Math.min((now - start) / DURATION, 1);
+    const c = Math.round(p * 100);
+    countEl.textContent = String(c).padStart(3, "0");
+    bar.style.transform = `scaleX(${c / 100})`;
+    if (p < 1) requestAnimationFrame(tick);
+    else { clearInterval(wi); el.style.transition = "opacity .5s"; el.style.opacity = "0";
+           setTimeout(() => el.remove(), 500); document.body.style.overflow = ""; }
+  }
+  document.body.style.overflow = "hidden";
+  requestAnimationFrame(tick);
+</script>
+```
+
+Custo: ~1 KB de JS, nenhuma lib. Não bloqueia LCP do conteúdo real porque o
+overlay se remove do DOM.
+
+### Efeito 2 — Palavra rotativa no Hero (role-cycling)
+
+**O que é:** uma palavra dentro da headline troca a cada ~2s ("Um
+*Criativo* / *Fundador* / *Estrategista* mora em SP"), com fade sutil.
+Acrescenta vida sem distrair.
+
+**Quando usar:** hero de portfolio, página pessoal, agência (multi-papel).
+**Evitar** quando a headline já é longa ou quando a proposta de valor precisa
+ser lida de uma vez (a troca tira o foco).
+
+**Astro** — span com fade CSS + script mínimo:
+
+```astro
+<h1 class="font-[var(--font-display)] text-5xl md:text-7xl">
+  Um <span id="role" class="italic text-[var(--color-accent-text)] role-fade"></span> mora em SP.
+</h1>
+<script>
+  const roles = ["Criativo", "Estrategista", "Fundador", "Designer"];
+  const el = document.getElementById("role");
+  let i = 0; el.textContent = roles[0];
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    setInterval(() => {
+      el.classList.remove("role-fade"); void el.offsetWidth; // restart anim
+      i = (i + 1) % roles.length; el.textContent = roles[i];
+      el.classList.add("role-fade");
+    }, 2000);
+  }
+</script>
+```
+
+```css
+/* global.css */
+.role-fade { display: inline-block; animation: role-fade-in .4s ease-out; }
+@keyframes role-fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+```
+
+### Efeito 3 — Halftone / textura granulada nas imagens
+
+**O que é:** sobreposição de pontos (halftone) ou grão sutil sobre imagens de
+hero/cards. Tira o "ar de banco de imagens" e dá acabamento editorial/impresso.
+Complementa o `.grain-overlay` que a skill já tem (grão = ruído analógico;
+halftone = retícula de pontos tipo impressão).
+
+**Quando usar:** sempre que houver foto de stock ou quando o brandbook pede
+estética impressa/editorial. **Evitar** sobre fotos de produto de e-commerce
+(precisa de fidelidade) e sobre rostos em close (pode sujar).
+
+**Adicionar ao `global.css`** (o `.grain-overlay` já existe; este é o par):
+
+```css
+/* Halftone dots — retícula de impressão */
+.halftone-overlay { position: relative; }
+.halftone-overlay::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(circle, #000 1px, transparent 1px);
+  background-size: 4px 4px;
+  opacity: 0.18; mix-blend-mode: multiply;
+}
+```
+
+Uso: `<figure class="halftone-overlay">` (ou combinar com `grain-overlay`
+para profundidade dupla). Zero JS, zero custo de performance.
+
+### Efeito 4 — Navbar pílula flutuante
+
+**O que é:** nav central em formato de pílula com `backdrop-blur`, borda
+sutil, que ganha sombra ao rolar. Visual leve e moderno.
+
+**Quando usar:** portfolios, sites de marca, SaaS landing. **Evitar** em sites
+institucionais densos (muitos itens de menu não cabem na pílula) e quando o
+brandbook pede header tradicional full-width. Você mesmo já notou: "legal pra
+alguns sites, não todos" — por isso é opção, não default.
+
+**Astro (`PillNav.astro`)** — borda accent só no hover, sombra no scroll:
+
+```astro
+<nav class="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4 md:pt-6">
+  <div id="pill" class="inline-flex items-center gap-1 rounded-full border border-[var(--color-line)] bg-[var(--color-bg-2)]/80 px-2 py-2 backdrop-blur-md transition-shadow">
+    <a href="#" class="rounded-full px-4 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-line)] hover:text-[var(--color-fg)] transition-colors">Início</a>
+    <a href="#sobre" class="rounded-full px-4 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-line)] hover:text-[var(--color-fg)] transition-colors">Sobre</a>
+    <span class="mx-1 h-5 w-px bg-[var(--color-line)] hidden sm:block"></span>
+    <a href="#contato" class="rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm text-[var(--color-bg)] transition-transform hover:scale-105">Falar agora</a>
+  </div>
+</nav>
+<script>
+  const pill = document.getElementById("pill");
+  const onScroll = () => pill.classList.toggle("shadow-lg", window.scrollY > 100);
+  onScroll(); addEventListener("scroll", onScroll, { passive: true });
+</script>
+```
+
+Mobile: garantir que a pílula caiba — colapsar itens ou usar 2–3 links no
+máximo. Nunca deixar a pílula estourar a largura (regra anti-overflow 4.5).
+
+### Efeito 5 — Seção pinada com parallax ("Visual Playground")
+
+**O que é:** uma seção que "trava" no centro enquanto colunas de imagens
+deslizam por trás em velocidades diferentes (parallax). É o único efeito da
+lista que justifica GSAP + ScrollTrigger.
+
+**Quando usar:** galeria de portfolio, showcase de projetos, seção de
+"experimentos/processo". **Evitar** em sites curtos (precisa de altura de
+scroll, ~300vh) e em mobile fraco (testar performance; degradar pra grid
+simples se `prefers-reduced-motion`).
+
+**Astro (ilha sob demanda)** — GSAP só carrega quando a seção se aproxima,
+preservando o bundle global:
+
+```astro
+<section id="playground" class="relative min-h-[300vh] overflow-hidden">
+  <div id="pg-pin" class="flex h-screen flex-col items-center justify-center text-center">
+    <span class="text-xs uppercase tracking-[0.3em] text-[var(--color-fg-subtle)]">Explorações</span>
+    <h2 class="text-4xl md:text-6xl">Playground <span class="italic font-[var(--font-display)]">visual</span></h2>
+  </div>
+  <div class="pointer-events-none absolute inset-0 grid grid-cols-2 gap-8 px-6 pt-[40vh] max-w-[1400px] mx-auto">
+    <div id="pg-colA" class="flex flex-col gap-24"><!-- <img> --></div>
+    <div id="pg-colB" class="flex flex-col gap-24 mt-32"><!-- <img> --></div>
+  </div>
+</section>
+<script>
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const sec = document.getElementById("playground");
+  if (!reduce && sec) {
+    const io = new IntersectionObserver(async ([e], obs) => {
+      if (!e.isIntersecting) return;
+      obs.disconnect();
+      const { gsap } = await import("gsap");
+      const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+      gsap.registerPlugin(ScrollTrigger);
+      ScrollTrigger.create({ trigger: sec, start: "top top", end: "bottom bottom", pin: "#pg-pin", pinSpacing: false });
+      const st = { trigger: sec, start: "top bottom", end: "bottom top", scrub: true };
+      gsap.to("#pg-colA", { yPercent: -18, ease: "none", scrollTrigger: st });
+      gsap.to("#pg-colB", { yPercent: 12, ease: "none", scrollTrigger: st });
+    }, { rootMargin: "200px" });
+    io.observe(sec);
+  }
+</script>
+```
+
+`import("gsap")` dinâmico = GSAP fica num chunk separado, baixado só quando a
+seção entra em cena. Resto da página segue com ~0 KB de JS.
+
+### Menu de apresentação (usar na Fase 6)
+
+Quando chegar na construção, apresentar assim:
+
+> "Posso adicionar efeitos signature opcionais. Quais te interessam pra esse
+> projeto?
+> 1. Preloader com contador + palavras da marca
+> 2. Palavra rotativa no hero
+> 3. Textura halftone/grão nas imagens
+> 4. Navbar pílula flutuante
+> 5. Seção pinada com parallax (galeria)
+>
+> Default Noha = nenhum aplicado automaticamente; sobriedade editorial primeiro."
 
 ## Phase 8 — Performance & SEO
 
@@ -803,8 +1089,35 @@ Não considerar entregue até que TODOS estes itens estejam ✅:
 - **SEMPRE** `max-width: 100%` em imagens, vídeos e SVGs.
 - **SEMPRE** viewport meta com `width=device-width, initial-scale=1, viewport-fit=cover`.
 - **SEMPRE** invocar `ui-ux-pro-max` na Fase 2, Fase 4 e Fase 6.
+- **SEMPRE** apresentar o menu da **Biblioteca de Efeitos Signature**
+  (Phase 7.5) na Fase 6 como opções — preloader, palavra rotativa, halftone,
+  navbar pílula, seção pinada com parallax. NUNCA aplicar todos por padrão; o
+  default é sobriedade editorial e o usuário escolhe quais entram.
+- **NUNCA** copiar o gradiente azul de template nos efeitos — derivar sempre
+  da accent única do projeto (`--gradient-accent`).
+- **SEMPRE** construir seção a seção, componente a componente — nunca a página
+  inteira de uma vez. Fechar e validar cada seção antes da próxima.
+- **SEMPRE** rodar `superpowers:brainstorming` no início de cada seção (Fase 6)
+  pra detalhar os componentes com o usuário antes de codar. Não presumir
+  conteúdo/layout sem alinhar.
+- **SEMPRE** procurar componente pronto no **21st.dev** (e shadcn/ui, Magic UI)
+  antes de codar do zero qualquer componente não-trivial — adaptando aos
+  tokens Noha. Codar do zero é exceção justificada, não o default.
 
 ## Common pitfalls
+
+- **Construir a página toda de uma vez** — gera retrabalho e seções que o
+  usuário não validou. Antídoto: uma seção por vez (Fase 6), com brainstorm
+  dos componentes antes de codar e validação mobile antes de seguir.
+
+- **Pular o brainstorm por seção** — presumir o conteúdo/layout de uma seção
+  e codar direto. Antídoto: `superpowers:brainstorming` no início de cada
+  seção, uma pergunta por vez, fechando consenso antes de escrever código.
+
+- **Codar componente do zero sem checar o 21st.dev** — reinventar navbar,
+  accordion, carousel, bento que já existem prontos. Antídoto: procurar no
+  21st.dev / shadcn/ui / Magic UI primeiro, adaptar aos tokens Noha, e só
+  codar do zero quando não há match decente ou o brandbook exige algo único.
 
 - **Overflow horizontal no mobile** — o usuário consegue dar scroll lateral e
   ver área branca do lado direito/esquerdo. Causa mais comum: elemento com
